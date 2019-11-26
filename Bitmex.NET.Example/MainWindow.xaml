@@ -1,0 +1,205 @@
+﻿<Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Bitmex.NET.Example"
+        xmlns:componentModel="clr-namespace:System.ComponentModel;assembly=WindowsBase"
+        xmlns:models="clr-namespace:Bitmex.NET.Example.Models"
+        xmlns:System="clr-namespace:System;assembly=mscorlib" 
+        x:Class="Bitmex.NET.Example.MainWindow"
+        mc:Ignorable="d"
+        Title="Bitmex.NET Example" Height="737.6" Width="1024" Closed="Window_Closed">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+        <CollectionViewSource x:Key="SortedOrderBookL2Sourse" Source="{Binding OrderBookL2_25}">
+            <CollectionViewSource.SortDescriptions>
+                <componentModel:SortDescription PropertyName="Price" Direction="Descending"/>
+            </CollectionViewSource.SortDescriptions>
+        </CollectionViewSource>
+
+        <CollectionViewSource x:Key="OpenOder" Source="{Binding OrderUpdates}">
+            <CollectionViewSource.SortDescriptions>
+                <componentModel:SortDescription PropertyName="Price" Direction="Ascending"/>
+            </CollectionViewSource.SortDescriptions>
+        </CollectionViewSource>
+
+        <CollectionViewSource x:Key="BindBidDepthChart" Source="{Binding BidDepthChart}">
+            <CollectionViewSource.SortDescriptions>
+                <componentModel:SortDescription PropertyName="Price" Direction="Ascending"/>
+            </CollectionViewSource.SortDescriptions>
+        </CollectionViewSource>
+
+        <CollectionViewSource x:Key="BindAskWall" Source="{Binding AskWall}">
+            <CollectionViewSource.SortDescriptions>
+                <componentModel:SortDescription PropertyName="Price" Direction="Ascending"/>
+            </CollectionViewSource.SortDescriptions>
+        </CollectionViewSource>
+
+        <CollectionViewSource x:Key="BindAskDepthChart" Source="{Binding AskDepthChart}">
+            <CollectionViewSource.SortDescriptions>
+                <componentModel:SortDescription PropertyName="Price" Direction="Ascending"/>
+            </CollectionViewSource.SortDescriptions>
+        </CollectionViewSource>
+
+        <Style x:Key="OrderBookItemContainerStyle" TargetType="{x:Type ListViewItem}"  >
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding Direction}" Value="Buy">
+                    <Setter Property="Foreground" Value="Green"/>
+                </DataTrigger>
+                <DataTrigger Binding="{Binding Direction}" Value="Sell">
+                    <Setter Property="Foreground" Value="Red"/>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+        <GroupBox Grid.Row="0" Header="Authorization" Visibility="{Binding IsNotConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                <Label Grid.Row="0" Grid.Column="0" 
+					   Content="Key"/>
+                <Label Grid.Row="1" Grid.Column="0" Content="Secret"/>
+
+                <TextBox Grid.Row="0" Grid.Column="1"  Text="{Binding Key, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+                <TextBox Grid.Row="1" Grid.Column="1"  Text="{Binding Secret, UpdateSourceTrigger=PropertyChanged}" VerticalAlignment="Center"/>
+
+                <StackPanel Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"  Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
+                    <Button Content="Connect" HorizontalAlignment="Stretch" MinWidth="200" Command="{Binding StartLoadSymbolsCmd}"/>
+                    <CheckBox x:Name="chbIsTest" IsChecked ="{Binding IsTest}" Content = "Use testnet.bitmex.com"/>
+                </StackPanel>
+
+            </Grid>
+        </GroupBox>
+        <GroupBox Header="Trade (buy/sell)"  Grid.Row="1" Visibility="{Binding IsConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <Label Grid.Row="0" Grid.Column="0" Content="Price"/>
+                <TextBox Grid.Row="0" Grid.Column="1" Text="{Binding Price}" VerticalAlignment="Center"/>
+                <Label Grid.Row="1" Grid.Column="0" Content="Size"/>
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding Size}" VerticalAlignment="Center"/>
+                <Label Grid.Row="2" Grid.Column="0" Content="Pair"/>
+                <ComboBox Grid.Row="2" Grid.Column="1" Text="{Binding Pair}">
+                    <ComboBoxItem Content ="XBTUSD"></ComboBoxItem>
+                </ComboBox>
+
+                <StackPanel Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
+                    <Button Content="Buy Market" HorizontalAlignment="Stretch" MinWidth="200" Command="{Binding BuyCmd}"/>
+                    <Button Content="Buy Limit" HorizontalAlignment="Stretch" MinWidth="200" Command="{Binding BuyLimitCmd}"/>
+                    <Button Content="Sell Market" HorizontalAlignment="Stretch" MinWidth="200" Command="{Binding SellCmd}"/>
+                    <Button Content="Sell Limit" HorizontalAlignment="Stretch" MinWidth="200" Command="{Binding SellLimitCmd}"/>
+                </StackPanel>
+            </Grid>
+        </GroupBox>
+
+        <GroupBox Header="Trade (Modify orders)"  Grid.Row="2" Visibility="{Binding IsConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <Label Grid.Row="0" Grid.Column="0" Content="Order ID"/>
+                <TextBox Grid.Row="0" Grid.Column="1" Text ="{Binding SelectedOrder}" VerticalAlignment="Center"/>
+                <Label Grid.Row="1" Grid.Column="0" Content="New Order Qty"/>
+                <TextBox Grid.Row="1" Grid.Column="1" Text="{Binding NewOrderQty}" VerticalAlignment="Center"/>
+                <Label Grid.Row="2" Grid.Column="0" Content="New Order Price"/>
+                <TextBox Grid.Row="2" Grid.Column="1" Text="{Binding NewOrderPrice}" VerticalAlignment="Center"/>
+
+                <StackPanel Grid.Row="3" Grid.Column="2" Orientation="Horizontal" HorizontalAlignment="Center" Margin="10">
+                    <Button Content="Cancel" HorizontalAlignment="Stretch" MinWidth="200" Command="{Binding CancleCmd}"/>
+                    <Button Content="Chase" HorizontalAlignment="Stretch" MinWidth="200" Command="{Binding ChaseCmd}"/>
+                </StackPanel>
+            </Grid>
+        </GroupBox>
+
+
+        <GroupBox Header="Instruments (life updates using socket connection example)"  Grid.Row="3" Visibility="{Binding IsConnected, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="251*"/>
+                    <ColumnDefinition Width="251*"/>
+                    <ColumnDefinition Width="251*"/>
+                    <ColumnDefinition Width="240*"/>
+                </Grid.ColumnDefinitions>
+                <GroupBox Header="Open Order IDs" Grid.Row="0" Grid.Column="0">
+                    <RichTextBox Grid.Row="0" Grid.Column="0">
+                        <FlowDocument>
+                            <Paragraph>
+                                <Run Text="{Binding ListOrderID}"/>
+                            </Paragraph>
+                        </FlowDocument>
+                    </RichTextBox>
+                </GroupBox>
+                <GroupBox Header="Open Orders" Grid.Row="0" Grid.Column="1">
+                    <ListView  ItemsSource="{Binding Source ={StaticResource OpenOder}}" >
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn DisplayMemberBinding="{Binding OrderId}" Header="OrderId"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding Account}" Header="Account"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding Symbol}" Header="Symbol"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding Side}" Header="Side"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding SimpleOrderQty}" Header="SimpleOrderQty"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding OrderQty}" Header="OrderQty"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding Price}" Header="Price"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding LeavesQty}" Header="LeavesQty"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </GroupBox>
+                <GroupBox Header="Depth chart Bid" Grid.Row="0" Grid.Column="2" >
+                    <ListView ItemsSource="{Binding Source ={StaticResource BindBidDepthChart}}" ItemContainerStyle="{StaticResource OrderBookItemContainerStyle}" >
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn DisplayMemberBinding="{Binding Volumn}" Header="Volumn"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding Size}" Header="Size"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding Price}" Header="Price"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </GroupBox>
+                <GroupBox Header="Depth Chart Ask" Grid.Row="0" Grid.Column="3" >
+                    <ListView ItemsSource="{Binding Source={StaticResource BindAskDepthChart}}" ItemContainerStyle="{StaticResource OrderBookItemContainerStyle}" >
+                        <ListView.View>
+                            <GridView>
+                                <GridViewColumn DisplayMemberBinding="{Binding Volumn}" Header="Volumn"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding Size}" Header="Size"/>
+                                <GridViewColumn DisplayMemberBinding="{Binding Price}" Header="Price"/>
+                            </GridView>
+                        </ListView.View>
+                    </ListView>
+                </GroupBox>
+            </Grid>
+        </GroupBox>
+    </Grid>
+</Window>
